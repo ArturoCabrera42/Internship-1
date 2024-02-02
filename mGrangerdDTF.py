@@ -108,18 +108,18 @@ class mGrangerdDTF:
         - a_ij_f_slices (numpy.ndarray): Array containing frequency slices of the coefficients matrix.
         """
 
-        # Compute the 2D Fourier Transform of A_n
+    
         A_fft = np.fft.fft2(A_n)
 
-        # Create an array to store the results for each frequency
+        # stores the results for each frequency
         a_ij_f_slices = np.zeros((num_frequencies,) + A_n.shape, dtype=np.complex128)
 
-        # Loop over frequencies
+        
         for idx, f in enumerate(np.linspace(lower_frequency_limit, upper_frequency_limit, num_frequencies)):
-            # Compute the exponential term in the frequency domain
+            
             exp_term = np.exp(-2j * np.pi * f * np.fft.fftfreq(A_n.shape[0])[:, np.newaxis] * np.arange(A_n.shape[0]))
 
-            # Compute the contribution of the nth term to a_ij(f)
+            
             a_ij_f = A_fft * exp_term
 
             # Dirac's delta
@@ -144,12 +144,12 @@ class mGrangerdDTF:
         - h (numpy.ndarray): Array containing the inverses of the frequency slices (H(f) = A^-1(f)).
         """
 
-        # Initialize an array to store the inverses
+        
         h = np.zeros_like(a_ij_f_slices, dtype=np.complex128)
 
-        # Loop over frequencies
+        
         for i in range(a_ij_f_slices.shape[0]):
-            # Compute the inverse of the frequency slice matrix
+            
             h[i] = np.linalg.inv(a_ij_f_slices[i])
 
         self.H = h
@@ -163,7 +163,7 @@ class mGrangerdDTF:
 
         H_h = np.empty_like(matrix, dtype=np.complex128) # H^H(f)
 
-        for i in range(matrix.shape[0]): #or frequencies...
+        for i in range(matrix.shape[0]): 
             H_h[i, :, :] = np.conjugate(matrix[i, :, :].T)
 
         self.H_h = H_h
@@ -184,10 +184,10 @@ class mGrangerdDTF:
         - fourier_matrix (numpy.ndarray): 3D array containing Fourier transforms for each frequency and each IC.
         """
 
-        # Calculate the frequencies
+        
         frequencies = np.linspace(lower_frequency_limit, upper_frequency_limit, num_frequencies)
 
-        # Initialize the matrix to store Fourier transforms
+        # stores Fourier transforms
         fourier_matrix = np.zeros((num_frequencies, errors.shape[0], errors.shape[1]), dtype=np.complex64)
 
         # Compute Fourier transform for each IC and each frequency
