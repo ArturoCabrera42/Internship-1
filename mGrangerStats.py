@@ -5,7 +5,7 @@ from scipy.stats import ttest_1samp
 
 # This code is in an implementation of steps to implement the statistical tests described in the work of Liu et al, 2012.
 
-class mGrangerStats2:
+class mGrangerStats:
     def __init__(self, original_data):
         self.original_data = original_data
 
@@ -23,10 +23,10 @@ class mGrangerStats2:
         surrogate_data = np.zeros((num_sets, num_time_points, num_ICs))
         for s in range(num_sets):
             for ic in range(num_ICs):
-                # Fourier transform for each IC
+                
                 original_fft = np.fft.fft(self.original_data[:, ic])
 
-                # Parameters
+                
                 n = len(original_fft)  # length of the fourier transform
                 half_len = (n - 1) // 2  # half the length of the FT
                 idx1 = np.arange(1, half_len + 1, dtype=int)  # 1st half
@@ -36,14 +36,14 @@ class mGrangerStats2:
                 phases1 = np.exp(2.0 * np.pi * 1j * np.random.rand(half_len))
                 phases2 = np.exp(2.0 * np.pi * 1j * np.random.rand(half_len))
 
-                # Apply random phases to each half
+                # Apply random phases
                 surrogate_fft = np.zeros_like(original_fft, dtype=complex)
                 surrogate_fft[0] = original_fft[0] # Symmetry! 
                 surrogate_fft[idx1] = original_fft[idx1] * phases1  # 1st half
                 phases2 = np.exp(2.0 * np.pi * 1j * np.random.rand(len(idx2))) # Phases for 2nd half with its specific length
-                surrogate_fft[idx2] = original_fft[idx2] * phases2  # 2nd half, corrected for dimensions. 2nd correction after problems with ADwAwD group
+                surrogate_fft[idx2] = original_fft[idx2] * phases2  # 2nd half, corrected for dimensions
 
-                # Inverse Fourier Transform
+                # The inverse Fourier transform after these processes is the surrogate data
                 surrogate_data[s, :, ic] = np.real(np.fft.ifft(surrogate_fft))
 
         return surrogate_data
@@ -64,15 +64,15 @@ class mGrangerStats2:
         dDTF_og = np.abs(og.dDTF_ij)  # dDTF matrix of the original series
         p_values = np.zeros((num_ICs, num_ICs))
 
-        # Computing the dDTF for each set in surrogate_series
-        su = np.zeros((num_sets, num_ICs, num_ICs))
+        # Compute the dDTF for each set in surrogate_series
+        su = np.zeros((num_sets, num_ICs, num_ICs)) # surrogate
         for s in range(num_sets):
             temporal_surrogate = surrogate_series[s, :, :]
             temporal_su = mGrangerdDTF(data=temporal_surrogate)
             # Compute dDTF matrix for each set
             su[s, :, :] = np.abs(temporal_su.dDTF_ij)
 
-        # Compare Original dDTF with Null Distribution for all elements
+        # Compare original dDTF with Null Distribution for each element of the dDTF matrix
         for i in range(num_ICs):
             for j in range(num_ICs):
                 original_value = dDTF_og[i, j]
@@ -81,14 +81,14 @@ class mGrangerStats2:
                 p_values[i, j] = p_value / 2  # One-tailed test
 
         # Identify Significant Connections
-        significance_levels = p_values < my_pvalue
+        significance_levels = p_values < my_pvalue # If a connection is not significant, it will be discarded
         significant_connections = np.zeros((num_ICs, num_ICs), dtype=bool)
         for i in range(num_ICs):
             for j in range(num_ICs):
                 if significance_levels[i, j]:
                     significant_connections[i, j] = True
 
-        # Network where the significanct connections are preserved
-        effective_connectivity_network = dDTF_og * significant_connections
+        
+        effective_connectivity_network = dDTF_og * significant_connections # Only significant connections are preserved
 
         return effective_connectivity_network
